@@ -83,6 +83,8 @@ class Dynesty(NestedSampler):
         or just the log-likelihood
     plot: bool, optional
         Switch to set whether or not you want to create traceplots
+    plot_separate: list, optional
+        List of parameter name strings to plot on a separate traceplot
     skip_import_verification: bool
         Skips the check if the sampler is installed if true. This is
         only advisable for testing environments
@@ -195,6 +197,7 @@ class Dynesty(NestedSampler):
         label="label",
         use_ratio=False,
         plot=False,
+        plot_separate=None,
         skip_import_verification=False,
         check_point=True,
         check_point_plot=True,
@@ -224,6 +227,7 @@ class Dynesty(NestedSampler):
             label=label,
             use_ratio=use_ratio,
             plot=plot,
+            plot_separate=plot_separate,
             skip_import_verification=skip_import_verification,
             exit_code=exit_code,
             **kwargs,
@@ -831,12 +835,25 @@ class Dynesty(NestedSampler):
             import dynesty.plotting as dyplot
             import matplotlib.pyplot as plt
 
-            labels = [label.replace("_", " ") for label in self.search_parameter_keys]
+            if self.plot_separate:
+                plot_main = np.setxor1d(self.search_parameter_keys, self.plot_separate)
+                indices = np.nonzero(np.in1d(self.search_parameter_keys, plot_main))[0]
+                separate_indices = np.nonzero(np.in1d(self.search_parameter_keys, self.plot_separate))[0]
+                labels = [label.replace("_", " ") for label in plot_main]
+                labels_separate = [label.replace("_", " ") for label in plot_separate]
+            else:
+                labels = [label.replace("_", " ") for label in self.search_parameter_keys]
+                indices = range(len(self.search_parameter_keys))
             try:
                 filename = f"{self.outdir}/{self.label}_checkpoint_trace.png"
-                fig = dyplot.traceplot(self.sampler.results, labels=labels)[0]
+                fig = dyplot.traceplot(self.sampler.results, labels=labels, dims=indices)[0]
                 fig.tight_layout()
                 fig.savefig(filename)
+                if self.plot_separate:
+                    filename = f"{self.outdir}/{self.label}_checkpoint_trace_separate.png"
+                    fig = dyplot.traceplot(self.sampler.results, labels=labels_separate, dims=indices_separate)[0]
+                    fig.tight_layout()
+                    fig.savefig(filename)
             except (
                 RuntimeError,
                 np.linalg.linalg.LinAlgError,
@@ -860,9 +877,14 @@ class Dynesty(NestedSampler):
 
                 temp = deepcopy(self.sampler.results)
                 temp = results_substitute(temp, dict(samples=temp["samples_u"]))
-                fig = dyplot.traceplot(temp, labels=labels)[0]
+                fig = dyplot.traceplot(temp, labels=labels, dims=indices)[0]
                 fig.tight_layout()
                 fig.savefig(filename)
+                if self.plot_separate:
+                    filename = f"{self.outdir}/{self.label}_checkpoint_trace_unit_separate.png"
+                    fig = dyplot.traceplot(temp, labels=labels_separate, dims=indices_separate)[0]
+                    fig.tight_layout()
+                    fig.savefig(filename)
             except (
                 RuntimeError,
                 np.linalg.linalg.LinAlgError,

@@ -126,6 +126,8 @@ class Sampler(object):
         or just the log-likelihood
     plot: bool, optional
         Switch to set whether or not you want to create traceplots
+    plot_separate: list, optional
+        List of parameter name strings to plot on a separate traceplot
     injection_parameters:
         A dictionary of the injection parameters
     meta_data:
@@ -160,6 +162,8 @@ class Sampler(object):
         or just the log-likelihood
     plot: bool
         Switch to set whether or not you want to create traceplots
+    plot_separate: list, optional
+        List of parameter name strings to plot on a separate traceplot
     skip_import_verification: bool
         Skips the check if the sampler is installed if true. This is
         only advisable for testing environments
@@ -213,6 +217,7 @@ class Sampler(object):
         label="label",
         use_ratio=False,
         plot=False,
+        plot_separate=None,
         skip_import_verification=False,
         injection_parameters=None,
         meta_data=None,
@@ -238,6 +243,7 @@ class Sampler(object):
             self._verify_external_sampler()
         self.external_sampler_function = None
         self.plot = plot
+        self.plot_separate = plot_separate
         self.likelihood_benchmark = likelihood_benchmark
 
         self._search_parameter_keys = list()
